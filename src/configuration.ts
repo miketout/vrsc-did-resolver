@@ -12,7 +12,7 @@ import { DEFAULT_REGISTRY_ADDRESS, knownInfuraNetworks, knownNetworks } from './
  * { name: 'development', registry: '0x9af37603e98e0dc2b855be647c39abe984fc2445', rpcUrl: 'http://127.0.0.1:8545/' }
  * { name: 'goerli', chainId: 5, provider: new InfuraProvider('goerli') }
  * { name: 'rinkeby', provider: new AlchemyProvider('rinkeby') }
- * { name: 'rsk:testnet', chainId: '0x1f', rpcUrl: 'https://public-node.testnet.rsk.co' }
+ * { name: 'matic', chainId: 137, rpcUrl: 'https://rpc-mainnet.matic.network' },
  * ```
  */
 export interface ProviderConfiguration {
@@ -106,7 +106,7 @@ function configureNetworks(conf: MultiProviderConfiguration): ConfiguredNetworks
  *   { name: 'development', registry: '0x9af37603e98e0dc2b855be647c39abe984fc2445', rpcUrl: 'http://127.0.0.1:8545/' },
  *   { name: 'goerli', chainId: 5, provider: new InfuraProvider('goerli') },
  *   { name: 'rinkeby', provider: new AlchemyProvider('rinkeby') },
- *   { name: 'rsk:testnet', chainId: '0x1f', rpcUrl: 'https://public-node.testnet.rsk.co' },
+ *   { name: 'matic', chainId: 137, rpcUrl: 'https://rpc-mainnet.matic.network' },
  * ]
  * ```
  */

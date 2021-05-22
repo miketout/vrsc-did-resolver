@@ -159,34 +159,6 @@ describe('ethrResolver (alt-chains)', () => {
       })
     })
 
-    it('resolves on rsk:testnet when configured', async () => {
-      const did = 'did:ethr:rsk:testnet:' + addr
-      const ethr = getResolver({ networks: [{ name: 'rsk:testnet', rpcUrl: 'https://did.testnet.rsk.co:4444' }] })
-      const resolver = new Resolver(ethr)
-      const result = await resolver.resolve(did)
-      expect(result).toEqual({
-        didDocumentMetadata: {},
-        didResolutionMetadata: { contentType: 'application/did+ld+json' },
-        didDocument: {
-          '@context': [
-            'https://www.w3.org/ns/did/v1',
-            'https://identity.foundation/EcdsaSecp256k1RecoverySignature2020/lds-ecdsa-secp256k1-recovery2020-0.0.jsonld',
-          ],
-          id: did,
-          verificationMethod: [
-            {
-              id: `${did}#controller`,
-              type: 'EcdsaSecp256k1RecoveryMethod2020',
-              controller: did,
-              blockchainAccountId: `${checksumAddr}@eip155:31`,
-            },
-          ],
-          authentication: [`${did}#controller`],
-          assertionMethod: [`${did}#controller`],
-        },
-      })
-    })
-
     it('resolves public key identifier on rsk when configured', async () => {
       const did = 'did:ethr:rsk:0x03fdd57adec3d438ea237fe46b33ee1e016eda6b585c3e27ea66686c2ea5358479'
       const ethr = getResolver({ networks: [{ name: 'rsk', rpcUrl: 'https://did.rsk.co:4444' }] })

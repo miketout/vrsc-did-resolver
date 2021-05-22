@@ -117,7 +117,7 @@ const providerConfig = {
   networks: [
     { name: "mainnet", provider: web3.currentProvider },
     { name: "0x4", rpcUrl: "https://rinkeby.infura.io/v3/<YOUR PROJECT ID>" }
-    { name: "rsk:testnet", chainId: "0x1f", rpcUrl: "https://did.testnet.rsk.co:4444" }
+    { name: 'matic', chainId: 137, rpcUrl: 'https://rpc-mainnet.matic.network' },
     { name: "development", rpcUrl: "http://localhost:7545", registry: "0xdca7ef03e98e0dc2b855be647c39abe984fcf21b" }
     { name: "myprivatenet", chainId: 123456, rpcUrl: "https://my.private.net.json.rpc.url" }
   ]
@@ -131,8 +131,7 @@ The configuration from above allows you to resolve ethr-did's of the following f
 - `did:ethr:mainnet:0xabcabc03e98e0dc2b855be647c39abe984193675`
 - `did:ethr:0xabcabc03e98e0dc2b855be647c39abe984193675` (defaults to mainnet configuration)
 - `did:ethr:0x4:0xabcabc03e98e0dc2b855be647c39abe984193675` (refer to the rinkeby network by chainID)
-- `did:ethr:rsk:testnet:0xabcabc03e98e0dc2b855be647c39abe984193675`
-- `did:ethr:0x1f:0xabcabc03e98e0dc2b855be647c39abe984193675` (refer to the rsk:testnet by chainID)
+- `did:ethr:0x89:0xabcabc03e98e0dc2b855be647c39abe984193675` (refer to the matic network by chainID)
 - `did:ethr:development:0xabcabc03e98e0dc2b855be647c39abe984193675`
 - `did:ethr:myprivatenet:0xabcabc03e98e0dc2b855be647c39abe984193675`
 - `did:ethr:0x1e240:0xabcabc03e98e0dc2b855be647c39abe984193675` (refer to `myprivatenet` by chainID)

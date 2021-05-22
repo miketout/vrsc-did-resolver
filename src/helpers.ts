@@ -120,7 +120,6 @@ export const knownInfuraNetworks: Record<string, string> = {
 export const knownNetworks: Record<string, string> = {
   ...knownInfuraNetworks,
   rsk: '0x1e',
-  'rsk:testnet': '0x1f',
   artis_t1: '0x03c401',
   artis_s1: '0x03c301',
   matic: '0x89',
