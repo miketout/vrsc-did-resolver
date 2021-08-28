@@ -1,72 +1,63 @@
-# ETHR DID Method Specification
+# Verus (did:vrsc) DID Method Specification
 
 ## Author
 
-- Veramo core team: <https://github.com/uport-project/veramo/discussions> or veramo-hello@mesh.xyz
+- Forked from vrsc-did-resolver by Veramo core team: <https://github.com/decentralized-identity/vrsc-did-resolver>
+
+- vrsc-did-resolver modifications by miketout (GitHub) & Verus Community Developers (https://verus.io/discord)
 
 ## Preface
 
-The ethr DID method specification conforms to the requirements specified in
-the [DID specification](https://w3c-ccg.github.io/did-core/), currently published by the W3C Credentials Community
-Group. For more information about DIDs and DID method specifications, please see
-the [DID Primer](https://github.com/WebOfTrustInfo/rebooting-the-web-of-trust-fall2017/blob/master/topics-and-advance-readings/did-primer.md)
+The vrsc DID method specification conforms to the requirements specified in
+the [DID specification](https://w3c.github.io/did-core/), currently published by the W3C Credentials Community Group. For more information about DIDs and DID method specifications, please see the [DID Primer](https://github.com/WebOfTrustInfo/rebooting-the-web-of-trust-fall2017/blob/master/topics-and-advance-readings/did-primer.md)
 
 ## Abstract
 
-Decentralized Identifiers (DIDs, see [1]) are designed to be compatible with any distributed ledger or network. In the
-Ethereum community, a pattern known as ERC1056 (see [2]) utilizes a smart contract for a lightweight identity management
-system intended explicitly for off-chain usage.
+Decentralized Identifiers (DIDs, see [1]) are designed to be compatible with any distributed ledger or network. In the Verus project, VerusIDs provide decentralized, multisig, revocable, recoverable, provable identity along with self-sovereign, direct administration over cryptographic funds and identity control. In addition, Verus provides an interplanetary scale namspace, which enables self-resolving identity names that can be used on or off-chain. This resolver provides a mapping  between VerusID's native functions and data structures and W3C DID compliant methods and represenations. It also uses self-resolving DIDs to locate identity information on any blockchain or other type of system that is connected to any part of the multichain Verus network via the Verus Interchain Protocol (VIP).
 
-The described DID method allows any Ethereum smart contract or key pair account to become a valid identity. An identity
-needs no registration. In the case that key management or additional attributes such as "service endpoints" are
-required, we deployed ERC1056 smart contracts on the networks listed in the
-[registry repository](https://github.com/uport-project/ethr-did-registry#contract-deployments)
+The described DID method allows any VerusID to be exposed as a fully W3C compliant DID, capable of resolving to compliant DID documents, being used for Verifiable Credentials, Authentication, to sign content and make provable attestations, and to associate content references. Identities based on VerusID must be registered. While this is typically done on a blockchain that supports the VerusID protocol, it is possible to support VerusID on any centralized or decentralized system capable of managing its namespace and using a namespace that does not conflict with any originating from the Verus root namespace or any other registered root namespaces. 
 
-Most networks use the default registry address: `0xdca7ef03e98e0dc2b855be647c39abe984fcf21b`.
+VerusIDs on Verus or any other Public Blockchains as a Service blockchain maintain a core set of cryptographic control information and data references on the blockchain, as well as associations with any launched blockchain currencies or other blockchains. This information includes:
 
-Since each Ethereum transaction must be funded, there is a growing trend of on-chain transactions that are authenticated
-via an externally created signature and not by the actual transaction originator. This allows for 3rd party funding
-services, or for receivers to pay without any fundamental changes to the underlying Ethereum architecture. These kinds
-of transactions have to be signed by an actual key pair and thus cannot be used to represent smart contract based
-Ethereum accounts. ERC1056 proposes a way of a smart contract or regular key pair delegating signing for various
-purposes to externally managed key pairs. This allows a smart contract to be represented, both on-chain and
-off-chain or in payment channels through temporary or permanent delegates.
+- "version" - the current VerusID protocol specific version of this VerusID. The version of IDs on mainnet as of December, 2019, is 1. The version which will be available on the network in the PBaaS release is 2. Any updates to a VerusID on the Verus network will also have the effect of upgrading its version automatically, if the older VerusID is an older version than that supported on the Verus or PBaaS network. Due to the nature of blockchain and VerusID permanence, all VerusID implementations that upgrade their version support are expected to have a well understood forward versioning transform. Additionally, if a blockchain updating its VerusID version is expected to maintain full identity interoperability with blockchains that do not update their VerusID version, it should provide for a well known downversioning transform to the version support required for its export of VerusIDs.
+- "flags" - flags are both user and system controlled states, which are either set according to user actions, such as setting a time lock on the ID for funds access while continuing to enable staking/proving of funds without delegation, or when significant state changes, such as entering a revoked state, or activating either a currency or blockchain, occur relative to that identity.
+- "primaryaddresses" - controlling blockchain addresses, which represent keys that define their supported algorithms based on their systemid and base58check version byte. For example, while these MUST not be identity IDs or DIDs, they may be either public key hash or compressed public key addresses at this time, each with its own address format. In the future, they may also be addresses containing keys for quantum resistant signatures, with the first expected to be Falcon512. Primaryaddresses allow any combination of valid address types to be used as one signer in a multisig identity.
+If the controller(s) of a VerusID update(s) the ID to new primaryaddresses, all subsequent spends or use of funds by that identity MUST require a valid signature using the new addresses. This enables an update to the identity from ECDSA signatures to quantum resistant signatures, such as Falcon or others, protecting all funds under the identity's control by just changing the primary addresses.
+- "minimumsignatures" - the minimum number of address signatures required to consider a set of cryptographic signatures enough to fully sign on behalf of this ID. At present, no distinction is made between the types of addresses in determining if there are the individual signers necessary for a valid signature.
+- "name" - This is a 64 byte friendly name, which may include all valid characters, including Unicode, with the exception of the set of characters "\\/:*?\"<>|@"
+- "parent" - parent is a base58check representation of an "i"-address, obtained by VDXF (Verus Data Exchange Format) specified hierarchical hashing of the namespace just above the "name". By applying the last stage of hierarchical hashing on the parent and name, the identityaddress is produced. "parent" is typically, but is not required to be, the systemid of the blockchain or system on which the ID was registered.
+- "identityaddress" - this is a read only attribute calculated from the name and the parent using the same VDXF hierarchical hashing algorithm.
+- "systemid" - this is the unique i-address of the blockchain, system, or gateway on which an ID was defined.
+- "contentmap" - this is a key/value mapping of 20 byte keys and 32 byte values, which are used as content references, keyed by VDXF key definitions.
+- "revocationauthority" - the i-address of an ID, which holds revocation authority over this identity record. If not specified on registration, this is set to self. Once set to a value other than self, the value of this authority can only be changed by the authority itself. The revocation authority is a full fledged VerusID of its own and has the sole authority of revocation over the identity. It cannot spend, sign on behalf of, or change the state of the identity beyond modifying the value of the specified revocationauthority and actually revoking the ID. Once revoked, the revocation authority has no power over an identity record.
+- "recoveryauthority" - the i-address of an ID, which holds recovery authority over this identity record. If not specified on registration, this is set to self, and if it is self, the ID MAY NOT be revoked. Attempts to revoke the identity will be rejected by consensus. Once set to a value other than self, the value of this authority in an identity record can subsequently only be changed by the recovery authority itself. The recovery authority is a VerusID with sole authority and capability of being able to recover a revoked identity. It cannot spend, sign on behalf of, or change the state of the identity at all unless the identity is revoked. Once an identity is revoked, the recovery authority has absolute control over updating the identity to an unrevoked, new state with new information.
+- "privateaddress" - this is a Sapling compatible zero knowledge address, which can be used on Verus or any PBaaS networks as a zero knowledge funds address. It can also be used as a message endpoint or in applications when a selectively private endpoint for funds, information, or permanent storage is required.
+- "timelock" - this value has two possible meanings, depending on the flags value. Access to funds limitations on Verus or PBaaS blockchains are enforced by consensus rules.
+  - If bit 1 (the value 2) of flags is set, then this identity is "funds locked", meaning that it cannot spend funds. It can stake funds on its network, the rewards of which may be directed to either itself, revocation, or recovery authorities, but in order to spend, the identity MUST first be unlocked, and then the number of blocks specified in "timelock" must pass.
+  - If bit 1 of flags is not set, this value is the block height or time of the "systemid" system, after which the VerusID is no longer considered locked and may access its funds.
 
 For a reference implementation of this DID method specification see [3].
 
 ### Identity Controller
 
-By default, each identity is controlled by itself. Each identity can only be controlled by a single address at any given
-time. By default, this is the address of the identity itself. The controller can replace themselves with any other
-Ethereum address, including contracts to allow more advanced models such as multi-signature controllership.
+By default, each identity is controlled by itself via primaryaddresses, except for the revocation and recovery authorities, which are controlled by those respective VerusID identities. In version 1 released on mainnet December 2019, the maximum number of primaryaddresses is 10. In version 2, which will be released in the PBaaS upgrade and which enables both timelock capabilities and increased multisig, the maximum number of primary addresses is 25 with a maximum number of signatures required of 13. For higher multisig applications, applications must use on-chain notarization and signature rollups.
 
-## Target System
+## Target Systems
 
-The target system is the Ethereum network where the ERC1056 is deployed. This could either be:
+This vrsc-did-resolver supports all PBaaS mainnet and testnet chains which support the VerusID protocol.
 
-- Mainnet
-- Ropsten
-- Rinkeby
-- Kovan
-- other EVM-compliant blockchains such as private chains, side-chains, or consortium chains.
+- VRSC
+- VRSCTEST
+- All mainnet or testnet PBaaS chains
 
-### Advantages
+## THIS README IS NOT UPDATED PAST THIS POINT
 
-- No transaction fee for identity creation
-- Uses Ethereum's built-in account abstraction
-- Supports multi-sig (or proxy) wallet for identity controller
-- Supports secp256k1 public keys as identifiers (on the same infrastructure)  
-- Decoupling claims data from the underlying identity
-- Supports decoupling Ethereum interaction from the underlying identity
-- Flexibility to use key management
-- Flexibility to allow third-party funding service to pay the gas fee if needed (meta-transactions)
-- Supports any EVM-compliant blockchain
 
 ## JSON-LD Context Definition
 
 Since this DID method still supports `publicKeyHex` and `publicKeyBase64` encodings for verification methods, it
 requires a valid JSON-LD context for those entries.
-To enable JSON-LD processing, the `@context` used when constructing DID documents for `did:ethr` should be:
+To enable JSON-LD processing, the `@context` used when constructing DID documents for `did:vrsc` should be:
 
 ```javascript
 "@context": [
@@ -79,9 +70,9 @@ You will also need this `@context` if you need to use `EcdsaSecp256k1RecoveryMet
 
 ## DID Method Name
 
-The namestring that shall identify this DID method is: `ethr`
+The namestring that shall identify this DID method is: `vrsc`
 
-A DID that uses this method MUST begin with the following prefix: `did:ethr`. Per the DID specification, this string
+A DID that uses this method MUST begin with the following prefix: `did:vrsc`. Per the DID specification, this string
 MUST be in lowercase. The remainder of the DID, after the prefix, is specified below.
 
 ## Method Specific Identifier
@@ -89,23 +80,21 @@ MUST be in lowercase. The remainder of the DID, after the prefix, is specified b
 The method specific identifier is represented as the Hex encoded secp256k1 public key (in compressed form),
 or the corresponding Hex-encoded Ethereum address on the target network, prefixed with `0x`.
 
-    ethr-did = "did:ethr:" ethr-specific-identifier
-    ethr-specific-identifier = [ ethr-network ":" ] ethereum-address / public-key-hex
-    ethr-network = "mainnet" / "ropsten" / "rinkeby" / "kovan" / network-chain-id
+    vrsc-did = "did:vrsc:" vrsc-specific-identifier
+    vrsc-specific-identifier = [ vrsc-network ":" ] ethereum-address / public-key-hex
+    vrsc-network = "mainnet" / "ropsten" / "rinkeby" / "kovan" / network-chain-id
     network-chain-id = "0x" *HEXDIG
     ethereum-address = "0x" 40*HEXDIG
     public-key-hex = "0x" 66*HEXDIG
 
-The `ethereum-address` or `public-key-hex` are case-insensitive, however, the corresponding `blockchainAccountId`
-MAY be represented using the [mixed case checksum representation described in EIP55](https://github.com/ethereum/EIPs/blob/master/EIPS/eip-55.md)
-in the resulting DID document.
+The `VerusID` or `public-key-hex` are case-insensitive.
 
 Note, if no public Ethereum network was specified, it is assumed that the DID is anchored on the Ethereum mainnet by
 default. This means the following DIDs will resolve to equivalent DID Documents:
 
-    did:ethr:mainnet:0xb9c5714089478a327f09197987f16f9e5d936e8a
-    did:ethr:0x1:0xb9c5714089478a327f09197987f16f9e5d936e8a
-    did:ethr:0xb9c5714089478a327f09197987f16f9e5d936e8a
+    did:vrsc:mainnet:0xb9c5714089478a327f09197987f16f9e5d936e8a
+    did:vrsc:0x1:0xb9c5714089478a327f09197987f16f9e5d936e8a
+    did:vrsc:0xb9c5714089478a327f09197987f16f9e5d936e8a
 
 If the identifier is a `public-key-hex`:
 
@@ -117,10 +106,10 @@ If the identifier is a `public-key-hex`:
 
 ## Relationship to ERC1056
 
-The subject of a `did:ethr` is mapped to an `identity` address in the ERC1056 contract. When dealing with public key
+The subject of a `did:vrsc` is mapped to an `identity` address in the ERC1056 contract. When dealing with public key
 identifiers, the corresponding ethereum address is used.
 
-The controller address of a `did:ethr` is mapped to the `owner` of an `identity` in the ERC1056.
+The controller address of a `did:vrsc` is mapped to the `owner` of an `identity` in the ERC1056.
 The controller address is not listed as the [DID `controller`](https://www.w3.org/TR/did-core/#did-controller) property
 in the DID document. This is intentional, to simplify the verification burden required by the DID spec.
 Rather, this address it is a concept specific to ERC1056 and defines the address that is allowed to perform Update and 
@@ -134,7 +123,7 @@ in all locations where `#controller` appears.
 
 ### Create (Register)
 
-In order to create a `ethr` DID, an Ethereum address, i.e., key pair, needs to be generated. At this point, no
+In order to create a `vrsc` DID, an Ethereum address, i.e., key pair, needs to be generated. At this point, no
 interaction with the target Ethereum network is required. The registration is implicit as it is impossible to brute
 force an Ethereum address, i.e., guessing the private key for a given public key on the Koblitz Curve
 (secp256k1). The holder of the private key is the entity identified by the DID.
@@ -148,17 +137,17 @@ transactions to the ERC1056 registry looks like this:
     "https://www.w3.org/ns/did/v1",
     "https://identity.foundation/EcdsaSecp256k1RecoverySignature2020/lds-ecdsa-secp256k1-recovery2020-0.0.jsonld"
   ],
-  "id": "did:ethr:0xb9c5714089478a327f09197987f16f9e5d936e8a",
+  "id": "did:vrsc:0xb9c5714089478a327f09197987f16f9e5d936e8a",
   "verificationMethod": [
     {
-      "id": "did:ethr:0xb9c5714089478a327f09197987f16f9e5d936e8a#controller",
+      "id": "did:vrsc:0xb9c5714089478a327f09197987f16f9e5d936e8a#controller",
       "type": "EcdsaSecp256k1RecoveryMethod2020",
-      "controller": "did:ethr:0xb9c5714089478a327f09197987f16f9e5d936e8a",
+      "controller": "did:vrsc:0xb9c5714089478a327f09197987f16f9e5d936e8a",
       "blockchainAccountId": "0xb9c5714089478a327f09197987f16f9e5d936e8a@eip155:1"
     }
   ],
-  "authentication": ["did:ethr:0xb9c5714089478a327f09197987f16f9e5d936e8a#controller"],
-  "assertionMethod": ["did:ethr:0xb9c5714089478a327f09197987f16f9e5d936e8a#controller"]
+  "authentication": ["did:vrsc:0xb9c5714089478a327f09197987f16f9e5d936e8a#controller"],
+  "assertionMethod": ["did:vrsc:0xb9c5714089478a327f09197987f16f9e5d936e8a#controller"]
 }
 ```
 
@@ -170,28 +159,28 @@ The minimal DID Document for a public key where there are no corresponding TXs t
     "https://www.w3.org/ns/did/v1",
     "https://identity.foundation/EcdsaSecp256k1RecoverySignature2020/lds-ecdsa-secp256k1-recovery2020-0.0.jsonld"
   ],
-  "id": "did:ethr:0x0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
+  "id": "did:vrsc:0x0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
   "verificationMethod": [
     {
-      "id": "did:ethr:0x0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798#controller",
+      "id": "did:vrsc:0x0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798#controller",
       "type": "EcdsaSecp256k1RecoveryMethod2020",
-      "controller": "did:ethr:0x0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
+      "controller": "did:vrsc:0x0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
       "blockchainAccountId": "0xb9c5714089478a327f09197987f16f9e5d936e8a@eip155:1"
     },
     {
-      "id": "did:ethr:0x0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798#controllerKey",
+      "id": "did:vrsc:0x0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798#controllerKey",
       "type": "EcdsaSecp256k1VerificationKey2019",
-      "controller": "did:ethr:0x0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
+      "controller": "did:vrsc:0x0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
       "publicKeyHex": "0x0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798"
     }
   ],
   "authentication": [
-    "did:ethr:0x0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798#controller",
-    "did:ethr:0x0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798#controllerKey"
+    "did:vrsc:0x0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798#controller",
+    "did:vrsc:0x0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798#controllerKey"
   ],
   "assertionMethod": [
-    "did:ethr:0x0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798#controller",
-    "did:ethr:0x0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798#controllerKey"
+    "did:vrsc:0x0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798#controller",
+    "did:vrsc:0x0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798#controllerKey"
   ]
 }
 ```
@@ -238,7 +227,7 @@ After building the history of events for an address, interpret each event to bui
 
 ##### Controller changes (`DIDOwnerChanged`)
 
-When the controller address of a `did:ethr` is changed, a `DIDOwnerChanged` event is emitted.
+When the controller address of a `did:vrsc` is changed, a `DIDOwnerChanged` event is emitted.
 
 ```solidity
 event DIDOwnerChanged(
@@ -291,9 +280,9 @@ Such valid delegates MUST be added to the `verificationMethod` array as `EcdsaSe
 Example:
 ```json
 {
-  "id": "did:ethr:0xf3beac30c498d9e26865f34fcaa57dbb935b0d74#delegate-1",
+  "id": "did:vrsc:0xf3beac30c498d9e26865f34fcaa57dbb935b0d74#delegate-1",
   "type": "EcdsaSecp256k1RecoveryMethod2020",
-  "controller": "did:ethr:0xf3beac30c498d9e26865f34fcaa57dbb935b0d74",
+  "controller": "did:vrsc:0xf3beac30c498d9e26865f34fcaa57dbb935b0d74",
   "blockchainAccountId": "0x12345678c498d9e26865f34fcaa57dbb935b0d74@eip155:1"
 }
 ```
@@ -350,9 +339,9 @@ generates a public key entry like the following:
 
 ```json
 {
-  "id": "did:ethr:0xf3beac30c498d9e26865f34fcaa57dbb935b0d74#delegate-1",
+  "id": "did:vrsc:0xf3beac30c498d9e26865f34fcaa57dbb935b0d74#delegate-1",
   "type": "EcdsaSecp256k1VerificationKey2019",
-  "controller": "did:ethr:0xf3beac30c498d9e26865f34fcaa57dbb935b0d74",
+  "controller": "did:vrsc:0xf3beac30c498d9e26865f34fcaa57dbb935b0d74",
   "publicKeyHex": "02b97c30de767f084ce3080168ee293053ba33b235d7116a3263d29f1450936b71"
 }
 ```
@@ -365,9 +354,9 @@ generates a public key entry like this:
 
 ```json
 {
-  "id": "did:ethr:0xf3beac30c498d9e26865f34fcaa57dbb935b0d74#delegate-1",
+  "id": "did:vrsc:0xf3beac30c498d9e26865f34fcaa57dbb935b0d74#delegate-1",
   "type": "Ed25519VerificationKey2018",
-  "controller": "did:ethr:0xf3beac30c498d9e26865f34fcaa57dbb935b0d74",
+  "controller": "did:vrsc:0xf3beac30c498d9e26865f34fcaa57dbb935b0d74",
   "publicKeyBase58": "DV4G2kpBKjE6zxKor7Cj21iL9x9qyXb6emqjszBXcuhz"
 }
 ```
@@ -381,9 +370,9 @@ generates a public key entry like this:
 
 ```json
 {
-  "id": "did:ethr:0xf3beac30c498d9e26865f34fcaa57dbb935b0d74#delegate-1",
+  "id": "did:vrsc:0xf3beac30c498d9e26865f34fcaa57dbb935b0d74#delegate-1",
   "type": "X25519KeyAgreementKey2019",
-  "controller": "did:ethr:0xf3beac30c498d9e26865f34fcaa57dbb935b0d74",
+  "controller": "did:vrsc:0xf3beac30c498d9e26865f34fcaa57dbb935b0d74",
   "publicKeyBase64": "MCowBQYDK2VuAyEAEYVXd3/7B4d0NxpSsA/tdVYdz5deYcR1U+ZkphdmEFI="
 }
 ```
@@ -402,7 +391,7 @@ A `DIDAttributeChanged` event for the identity `0xf3beac30c498d9e26865f34fcaa57d
 
 ```json
 {
-  "id": "did:ethr:0xf3beac30c498d9e26865f34fcaa57dbb935b0d74#service-1",
+  "id": "did:vrsc:0xf3beac30c498d9e26865f34fcaa57dbb935b0d74#service-1",
   "type": "HubService",
   "serviceEndpoint": "https://hubs.uport.me"
 }
@@ -516,7 +505,7 @@ Example:
 
 This DID method supports resolving previous versions of the DID document by specifying a `versionId` parameter.
 
-Example: `did:ethr:0x26bf14321004e770e7a8b080b7a526d8eed8b388?versionId=12090175`
+Example: `did:vrsc:0x26bf14321004e770e7a8b080b7a526d8eed8b388?versionId=12090175`
 
 The `versionId` is the block number at which the DID resolution MUST be performed.
 Only ERC1056 events prior to or contained in this block number are to be considered when building the event history.
@@ -559,7 +548,7 @@ TBD
 
 ## Reference Implementations
 
-The code at [https://github.com/decentralized-identity/ethr-did-resolver]() is intended to present a reference
+The code at [https://github.com/decentralized-identity/vrsc-did-resolver]() is intended to present a reference
 implementation of this DID method.
 
 ## References
@@ -568,6 +557,6 @@ implementation of this DID method.
 
 **[2]** <https://github.com/ethereum/EIPs/issues/1056>
 
-**[3]** <https://github.com/decentralized-identity/ethr-did-resolver>
+**[3]** <https://github.com/decentralized-identity/vrsc-did-resolver>
 
-**[4]** <https://github.com/uport-project/ethr-did-registry>
+**[4]** <https://github.com/uport-project/vrsc-did-registry>
